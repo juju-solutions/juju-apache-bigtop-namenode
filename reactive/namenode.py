@@ -9,7 +9,7 @@ from jujubigdata import utils
 from charmhelpers.core import hookenv, unitdata
 
 
-@when('hadoop.installed')
+@when('bigtop.installed')
 @when_not('namenode.started')
 def configure_namenode():
     local_hostname = hookenv.local_unit().replace('/', '-')
