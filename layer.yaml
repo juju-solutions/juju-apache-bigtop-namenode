@@ -1,7 +1,7 @@
 repo: git@github.com:juju-solutions/layer-apache-bigtop-namenode.git
 includes:
   - 'layer:apache-bigtop-base'
-  - 'layer:hadoop-ganglia'
+#  - 'layer:hadoop-ganglia'
   - 'interface:dfs'
   - 'interface:dfs-slave'
   - 'interface:benchmark'
