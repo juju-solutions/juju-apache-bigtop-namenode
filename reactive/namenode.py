@@ -9,17 +9,12 @@ from charmhelpers.core import hookenv
 @when('bigtop.installed')
 @when_not('namenode.started')
 def configure_namenode():
-    local_hostname = hookenv.local_unit().replace('/', '-')
-    private_address = hookenv.unit_get('private-address')
-    ip_addr = utils.resolve_private_address(private_address)
-    hadoop = get_bigtop_base()
-    # hdfs = HDFS(hadoop)
-    # hdfs.configure_namenode()
-    # hdfs.format_namenode()
-    # hdfs.start_namenode()
-    # hdfs.create_hdfs_dirs()
-    # hadoop.open_ports('namenode')
-    utils.update_kv_hosts({ip_addr: local_hostname})
+    bigtop = get_bigtop_base()
+
+    # use layer options someday, for now, hard code ports
+    hookenv.open_port('8020')
+    hookenv.open_port('50070')
+
     set_state('namenode.started')
 
 

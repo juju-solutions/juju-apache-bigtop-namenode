@@ -5,3 +5,12 @@ includes:
   - 'interface:dfs'
   - 'interface:dfs-slave'
   - 'interface:benchmark'
+options:
+  bigtop-base:
+    ports:
+      namenode:
+        port: 8020
+        exposed_on: 'bigtop-namenode'
+      nn_webapp_http:
+        port: 50070
+        exposed_on: 'bigtop-namenode'
