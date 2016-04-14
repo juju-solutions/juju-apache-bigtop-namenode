@@ -2,8 +2,9 @@ from charms.reactive import when
 from charms.reactive import when_not
 from charms.reactive import set_state
 from charms.layer.apache_bigtop_base import get_bigtop_base
-from jujubigdata import utils
+from charms.layer.apache_bigtop_datanode import get_layer_opts
 from charmhelpers.core import hookenv
+import subprocess
 
 
 @when_not('namenode.installed')
@@ -12,14 +13,12 @@ def install_hadoop():
     bigtop.install()
     set_state('namenode.installed')
 
+
 @when('namenode.installed')
 @when_not('namenode.started')
 def configure_namenode():
-    bigtop = get_bigtop_base()
-
-    # use layer options someday, for now, hard code ports
-    hookenv.open_port('8020')
-    hookenv.open_port('50070')
+    for port in get_layer_opts().exposed_ports('namenode'):
+        hookenv.open_port(port)
 
     set_state('namenode.started')
 
@@ -40,15 +39,15 @@ def send_info(datanode):
     # hdfs_port = hadoop.dist_config.port('namenode')
     # webhdfs_port = hadoop.dist_config.port('nn_webapp_http')
 
-    utils.update_kv_hosts({node['ip']: node['host']
-                           for node in datanode.nodes()})
-    utils.manage_etc_hosts()
+    #utils.update_kv_hosts({node['ip']: node['host']
+    #                       for node in datanode.nodes()})
+    #utils.manage_etc_hosts()
 
     # datanode.send_spec(hadoop.spec())
     # datanode.send_namenodes([local_hostname])
     # datanode.send_ports(hdfs_port, webhdfs_port)
     # datanode.send_ssh_key(utils.get_ssh_key('hdfs'))
-    datanode.send_hosts_map(utils.get_kv_hosts())
+    #datanode.send_hosts_map(utils.get_kv_hosts())
 
     # slaves = [node['host'] for node in datanode.nodes()]
     # if data_changed('namenode.slaves', slaves):
@@ -59,6 +58,8 @@ def send_info(datanode):
     #     count=len(slaves),
     #     s='s' if len(slaves) > 1 else '',
     # ))
+    hostname = subprocess.check_output(['hostname', '-f']).strip().decode()
+    datanode.send_namenodes([hostname])
     set_state('namenode.ready')
     hookenv.status_set('active', 'ready')
 
