@@ -1,8 +1,7 @@
 from charms.reactive import when
 from charms.reactive import when_not
 from charms.reactive import set_state
-from charms.layer.apache_bigtop_base import get_bigtop_base
-from charms.layer.apache_bigtop_namenode import get_layer_opts
+from charms.layer.apache_bigtop_base import get_bigtop_base, get_layer_opts
 from charmhelpers.core import hookenv
 import subprocess
 
@@ -11,7 +10,8 @@ import subprocess
 def install_hadoop():
     hookenv.status_set('maintenance', 'installing namenode')
     bigtop = get_bigtop_base()
-    bigtop.install()
+    nn_fqdn = subprocess.check_output(['hostname', '-f']).strip().decode()
+    bigtop.install(NN=nn_fqdn)
     set_state('namenode.installed')
     hookenv.status_set('maintenance', 'namenode installed')
 
