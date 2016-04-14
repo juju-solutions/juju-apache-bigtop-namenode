@@ -6,7 +6,13 @@ from jujubigdata import utils
 from charmhelpers.core import hookenv
 
 
-@when('bigtop.installed')
+@when_not('namenode.installed')
+def install_hadoop():
+    bigtop = get_bigtop_base()
+    bigtop.install()
+    set_state('namenode.installed')
+
+@when('namenode.installed')
 @when_not('namenode.started')
 def configure_namenode():
     bigtop = get_bigtop_base()
@@ -54,6 +60,7 @@ def send_info(datanode):
     #     s='s' if len(slaves) > 1 else '',
     # ))
     set_state('namenode.ready')
+    hookenv.status_set('active', 'ready')
 
 # TODO a client should be unblocked once the NN && DNs are ready. I.g. when the whole HDFS as the service
 ## is up and running
