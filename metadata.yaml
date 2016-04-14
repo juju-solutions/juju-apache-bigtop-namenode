@@ -8,7 +8,7 @@ description: >
   This charm manages the HDFS master node (NameNode).
 tags: ["applications", "bigdata", "bigtop", "hadoop", "apache"]
 provides:
-  client:
+  namenode:
     interface: dfs
   benchmark:
     interface: benchmark
