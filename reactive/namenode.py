@@ -26,8 +26,8 @@ def start_namenode():
     hookenv.status_set('active', 'ready')
 
 
-@when('namenode.started', 'datanode.joined')
-def send_info(datanode):
+@when('datanode.joined')
+def send_fqdn_to_dn(datanode):
     '''Send datanodes our FQDN so they can install as slaves.'''
     hostname = subprocess.check_output(['hostname', '-f']).strip().decode()
     datanode.send_namenodes([hostname])
@@ -37,6 +37,13 @@ def send_info(datanode):
         count=len(slaves),
         s='s' if len(slaves) > 1 else '',
     ))
+
+
+@when('client.joined')
+def send_fqdn_to_client(client):
+    '''Send clients our FQDN so they can install as slaves.'''
+    hostname = subprocess.check_output(['hostname', '-f']).strip().decode()
+    client.send_namenodes([hostname])
 
 
 @when('benchmark.joined')
