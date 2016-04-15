@@ -33,14 +33,8 @@ def send_fqdn_to_dn(datanode):
     hostname = subprocess.check_output(['hostname', '-f']).strip().decode()
     datanode.send_namenodes([hostname])
 
-    slaves = [node['host'] for node in datanode.nodes()]
-    hookenv.status_set('active', 'ready ({count} dataNode{s})'.format(
-        count=len(slaves),
-        s='s' if len(slaves) > 1 else '',
-    ))
 
-
-@when('client.joined')
+@when('namenode.clients')
 def send_fqdn_to_client(client):
     '''Send clients our FQDN so they can install as slaves.'''
     hostname = subprocess.check_output(['hostname', '-f']).strip().decode()
