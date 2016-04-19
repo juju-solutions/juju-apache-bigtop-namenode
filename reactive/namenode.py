@@ -55,6 +55,10 @@ def send_fqdn_to_client(client):
     # nn_host = utils.resolve_private_address(hookenv.unit_private_ip())
     nn_host = subprocess.check_output(['facter', 'fqdn']).strip().decode()
     client.send_namenodes([nn_host])
+    hdfs_port = get_layer_opts().port('namenode')
+    webhdfs_port = get_layer_opts().port('nn_webapp_http')
+    client.send_ports(hdfs_port, webhdfs_port)
+    client.send_ready(True)
 
 
 @when('benchmark.joined')
