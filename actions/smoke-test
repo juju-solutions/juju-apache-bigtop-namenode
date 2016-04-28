@@ -6,7 +6,7 @@ from charmhelpers.core import hookenv
 from jujubigdata.utils import run_as
 from charms.reactive import is_state
 
-if not is_state('namenode.ready'):
+if not is_state('apache-bigtop-namenode.ready'):
     hookenv.action_fail('NameNode service not yet ready')
 
 
