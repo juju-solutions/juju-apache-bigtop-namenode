@@ -3,6 +3,7 @@ from charms.layer.apache_bigtop_base import get_bigtop_base, get_layer_opts
 from charmhelpers.core import hookenv, host
 from jujubigdata import utils
 import subprocess
+from path import Path
 
 
 @when('puppet.available')
@@ -21,6 +22,14 @@ def install_namenode():
     kv_ip = utils.resolve_private_address(hookenv.unit_private_ip())
     kv_hostname = hookenv.local_unit().replace('/', '-')
     utils.update_kv_host(kv_ip, kv_hostname)
+
+    # make our namenode listen on all interfaces
+    hdfs_site = Path('/etc/hadoop/conf/hdfs-site.xml')
+    with utils.xmlpropmap_edit_in_place(hdfs_site) as props:
+        props['dfs.namenode.rpc-bind-host'] = '0.0.0.0'
+        props['dfs.namenode.servicerpc-bind-host'] = '0.0.0.0'
+        props['dfs.namenode.http-bind-host'] = '0.0.0.0'
+        props['dfs.namenode.https-bind-host'] = '0.0.0.0'
 
     set_state('apache-bigtop-namenode.installed')
     hookenv.status_set('maintenance', 'namenode installed')
