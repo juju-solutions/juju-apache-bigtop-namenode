@@ -6,6 +6,30 @@ import subprocess
 from path import Path
 
 
+###############################################################################
+# Utility methods
+###############################################################################
+def send_early_install_info(remote):
+    """Send clients/slaves enough relation data to start their install.
+
+    If slaves or clients join before the namenode is installed, we can still provide enough
+    info to start their installation. This will help parallelize installation among our
+    cluster.
+
+    Note that slaves can safely install early, but should not start until the
+    'namenode.ready' state is set by the dfs-slave interface.
+    """
+    fqdn = subprocess.check_output(['facter', 'fqdn']).strip().decode()
+    hdfs_port = get_layer_opts().port('namenode')
+    webhdfs_port = get_layer_opts().port('nn_webapp_http')
+
+    remote.send_namenodes([fqdn])
+    remote.send_ports(hdfs_port, webhdfs_port)
+
+
+###############################################################################
+# Core methods
+###############################################################################
 @when('puppet.available')
 @when_not('apache-bigtop-namenode.installed')
 def install_namenode():
@@ -47,24 +71,14 @@ def start_namenode():
     hookenv.status_set('maintenance', 'namenode started')
 
 
+###############################################################################
+# Slave methods
+###############################################################################
 @when('datanode.joined')
 @when_not('apache-bigtop-namenode.installed')
 def send_dn_install_info(datanode):
-    """Send datanodes enough info to start their install.
-
-    If a datanode joins before the namenode is installed, we can still provide
-    enough info to start their installation. This will help parallelize
-    installation among our cluster.
-
-    NOTE: Datanodes can safely install early, but should not start until
-    the dfs-slave interface has set the 'namenode.ready' state.
-    """
-    fqdn = subprocess.check_output(['facter', 'fqdn']).strip().decode()
-    hdfs_port = get_layer_opts().port('namenode')
-    webhdfs_port = get_layer_opts().port('nn_webapp_http')
-
-    datanode.send_namenodes([fqdn])
-    datanode.send_ports(hdfs_port, webhdfs_port)
+    """Send datanodes enough relation data to start their install."""
+    send_early_install_info(datanode)
 
 
 @when('apache-bigtop-namenode.started', 'datanode.joined')
@@ -126,24 +140,14 @@ def wait_for_dn():
     hookenv.status_set('active', 'hdfs requires a datanode relation')
 
 
+###############################################################################
+# Client methods
+###############################################################################
 @when('namenode.clients')
 @when_not('apache-bigtop-namenode.installed')
 def send_client_install_info(client):
-    """Send clients (plugin, RM, non-DNs) enough info to start their install.
-
-    If a client joins before the namenode is installed, we can still provide
-    enough info to start their installation. This will help parallelize
-    installation among our cluster.
-
-    NOTE: Clients can safely install early, but should not start until
-    the dfs interface has set the 'namenode.ready' state.
-    """
-    fqdn = subprocess.check_output(['facter', 'fqdn']).strip().decode()
-    hdfs_port = get_layer_opts().port('namenode')
-    webhdfs_port = get_layer_opts().port('nn_webapp_http')
-
-    client.send_namenodes([fqdn])
-    client.send_ports(hdfs_port, webhdfs_port)
+    """Send clients enough relation data to start their install."""
+    send_early_install_info(client)
 
 
 @when('apache-bigtop-namenode.started', 'namenode.clients')
@@ -168,11 +172,7 @@ def send_client_all_info(client):
     else:
         client.send_ready(False)
 
-    # hosts_map is required by the dfs interface to signify
-    # NN's readiness. Send it, even though it is not utilized by bigtop.
+    # hosts_map and clustername are required by the dfs interface to signify
+    # NN's readiness. Send it, even though they are not utilized by bigtop.
     client.send_hosts_map(utils.get_kv_hosts())
-
-
-@when('benchmark.joined')
-def register_benchmarks(benchmark):
-    benchmark.register('nnbench', 'testdfsio')
+    client.send_clustername(hookenv.service_name())
