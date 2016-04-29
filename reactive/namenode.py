@@ -19,9 +19,7 @@ def install_namenode():
     # but a hosts_map attribute is required by some interfaces (eg: dfs-slave)
     # to signify NN's readiness. Set our NN info in the KV to fulfill this
     # requirement.
-    kv_ip = utils.resolve_private_address(hookenv.unit_private_ip())
-    kv_hostname = hookenv.local_unit().replace('/', '-')
-    utils.update_kv_host(kv_ip, kv_hostname)
+    utils.initialize_kv_host()
 
     # make our namenode listen on all interfaces
     hdfs_site = Path('/etc/hadoop/conf/hdfs-site.xml')
@@ -85,20 +83,22 @@ def send_dn_all_info(datanode):
     datanode.send_namenodes([fqdn])
     datanode.send_ports(hdfs_port, webhdfs_port)
 
-    # hosts_map and ssh_key are required by the dfs-slave interface to signify
-    # NN's readiness. Send them, even though they are not utilized by bigtop.
+    # hosts_map, ssh_key, and clustername are required by the dfs-slave
+    # interface to signify NN's readiness. Send them, even though they are not
+    # utilized by bigtop.
     # NB: update KV hosts with all datanodes prior to sending the hosts_map
     # because dfs-slave gates readiness on a DN's presence in the hosts_map.
-    utils.update_kv_hosts({node['ip']: node['host']
-                           for node in datanode.nodes()})
+    # TODO: does this work? how? dn.hosts_map should be empty.
+    utils.update_kv_hosts(datanode.hosts_map())
     datanode.send_hosts_map(utils.get_kv_hosts())
     datanode.send_ssh_key('invalid')
+    datanode.send_clustername(hookenv.service_name())
 
     # update status with slave count and report ready for hdfs
-    slaves = [node['host'] for node in datanode.nodes()]
+    num_slaves = len(datanode.nodes())
     hookenv.status_set('active', 'ready ({count} datanode{s})'.format(
-        count=len(slaves),
-        s='s' if len(slaves) > 1 else '',
+        count=num_slaves,
+        s='s' if num_slaves > 1 else '',
     ))
     set_state('apache-bigtop-namenode.ready')
 
