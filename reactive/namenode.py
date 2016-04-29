@@ -53,6 +53,12 @@ def install_namenode():
         props['dfs.namenode.http-bind-host'] = '0.0.0.0'
         props['dfs.namenode.https-bind-host'] = '0.0.0.0'
 
+    # We need to create the 'mapred' user/group since we are not installing
+    # hadoop-mapreduce. This is needed so the namenode can access yarn
+    # job history files in hdfs. Also add our ubuntu user to the hadoop
+    # and mapred groups.
+    get_layer_opts().add_users()
+
     set_state('apache-bigtop-namenode.installed')
     hookenv.status_set('maintenance', 'namenode installed')
 

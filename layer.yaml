@@ -6,9 +6,13 @@ includes:
   - 'interface:benchmark'
 options:
   apache-bigtop-base:
+    groups:
+      - 'mapred'
     users:
+      mapred:
+        groups: ['hadoop', 'mapred']
       ubuntu:
-        groups: ['hadoop']
+        groups: ['hadoop', 'mapred']
     ports:
       namenode:
         port: 8020
