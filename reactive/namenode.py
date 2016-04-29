@@ -88,7 +88,6 @@ def send_dn_all_info(datanode):
     # utilized by bigtop.
     # NB: update KV hosts with all datanodes prior to sending the hosts_map
     # because dfs-slave gates readiness on a DN's presence in the hosts_map.
-    # TODO: does this work? how? dn.hosts_map should be empty.
     utils.update_kv_hosts(datanode.hosts_map())
     datanode.send_hosts_map(utils.get_kv_hosts())
     datanode.send_ssh_key('invalid')
@@ -112,8 +111,7 @@ def remove_dn(datanode):
     it is required for the 'namenode.ready' state, so we may as well keep it
     accurate.
     """
-    nodes_leaving = datanode.nodes()  # only returns nodes in "departing" state
-    slaves_leaving = [node['host'] for node in nodes_leaving]
+    slaves_leaving = datanode.nodes()  # only returns nodes in "departing" state
     hookenv.log('Datanodes leaving: {}'.format(slaves_leaving))
     utils.remove_kv_hosts(slaves_leaving)
     datanode.dismiss()
