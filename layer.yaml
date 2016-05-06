@@ -8,11 +8,14 @@ options:
   apache-bigtop-base:
     groups:
       - 'mapred'
+      - 'yarn'
     users:
       mapred:
         groups: ['hadoop', 'mapred']
       ubuntu:
         groups: ['hadoop', 'mapred']
+      yarn:
+        groups: ['hadoop', 'yarn']
     ports:
       namenode:
         port: 8020
