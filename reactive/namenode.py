@@ -1,8 +1,7 @@
 from charms.reactive import is_state, remove_state, set_state, when, when_not
-from charms.layer.apache_bigtop_base import get_bigtop_base, get_layer_opts
+from charms.layer.apache_bigtop_base import Bigtop, get_layer_opts, get_fqdn
 from charmhelpers.core import hookenv, host
 from jujubigdata import utils
-import subprocess
 from path import Path
 
 
@@ -19,7 +18,7 @@ def send_early_install_info(remote):
     Note that slaves can safely install early, but should not start until the
     'namenode.ready' state is set by the dfs-slave interface.
     """
-    fqdn = subprocess.check_output(['facter', 'fqdn']).strip().decode()
+    fqdn = get_fqdn()
     hdfs_port = get_layer_opts().port('namenode')
     webhdfs_port = get_layer_opts().port('nn_webapp_http')
 
@@ -30,14 +29,15 @@ def send_early_install_info(remote):
 ###############################################################################
 # Core methods
 ###############################################################################
-@when('puppet.available')
+@when('bigtop.available')
 @when_not('apache-bigtop-namenode.installed')
 def install_namenode():
     hookenv.status_set('maintenance', 'installing namenode')
-    bigtop = get_bigtop_base()
-    nn_host = subprocess.check_output(['facter', 'fqdn']).strip().decode()
+    bigtop = Bigtop()
+    nn_host = get_fqdn()
     hosts = {'namenode': nn_host}
-    bigtop.install(hosts=hosts, roles='namenode')
+    bigtop.render_site_yaml(hosts=hosts, roles='namenode')
+    bigtop.trigger_puppet()
 
     # /etc/hosts entries from the KV are not currently used for bigtop,
     # but a hosts_map attribute is required by some interfaces (eg: dfs-slave)
@@ -94,8 +94,8 @@ def send_dn_all_info(datanode):
     At this point, the namenode is ready to serve datanodes. Send all
     dfs-slave relation data so that our 'namenode.ready' state becomes set.
     """
-    bigtop = get_bigtop_base()
-    fqdn = subprocess.check_output(['facter', 'fqdn']).strip().decode()
+    bigtop = Bigtop()
+    fqdn = get_fqdn()
     hdfs_port = get_layer_opts().port('namenode')
     webhdfs_port = get_layer_opts().port('nn_webapp_http')
 
@@ -163,8 +163,8 @@ def send_client_all_info(client):
     At this point, the namenode is ready to serve clients. Send all
     dfs relation data so that our 'namenode.ready' state becomes set.
     """
-    bigtop = get_bigtop_base()
-    fqdn = subprocess.check_output(['facter', 'fqdn']).strip().decode()
+    bigtop = Bigtop()
+    fqdn = get_fqdn()
     hdfs_port = get_layer_opts().port('namenode')
     webhdfs_port = get_layer_opts().port('nn_webapp_http')
 
